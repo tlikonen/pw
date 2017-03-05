@@ -1,0 +1,470 @@
+#!/bin/bash
+
+# pw -- a password manager
+#
+# Requires: GNU/Linux, gpg, xsel
+
+# Copyright (C) 2016-2017  Teemu Likonen <tlikonen@iki.fi>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or (at
+# your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# The license text: <http://www.gnu.org/licenses/gpl-3.0.html>
+
+program=$(basename -- "$0")
+storage=$HOME/.pw
+password_dir=$storage/passwords
+key_file=$storage/key
+config_file=$storage/config
+
+[ -f "$config_file" ] && . "$config_file"
+[ -z "$password_length" ] && password_length=16
+[ -z "$password_timeout" ] && password_timeout=15
+[ -z "$gpg_program" ] && gpg_program=gpg
+
+umask 077
+
+msg() { printf "$@"; }
+error() { printf "$@" >&2; }
+
+run_editor() { "$EDITOR" "$1"; }
+
+check_command() {
+	local command=$1
+	if [ -n "$command" ]; then
+		error 'Only one command option is allowed; '
+		error 'see -h for help.\n'
+		exit 1
+	else
+		return 0
+	fi
+}
+
+chdir_password_dir() {
+	if [ ! -d "$storage" -o ! -d "$password_dir" ]; then
+		error "Password storage directory is missing.\n"
+		error "Use -i option to initialize the storage.\n"
+		return 1
+	elif [ ! -f "$key_file" ]; then
+		error "Key id file %s is missing.\n" "$key_file"
+		error "Use -i option to initialize the storage.\n"
+		return 1
+	else
+		cd -- "$password_dir" || return 1
+	fi
+}
+
+read_key() {
+	local key
+	[ -f "$key_file" ] && key=$(cat -- "$key_file")
+	if [ -n "$key" ]; then
+		printf %s "$key"
+		return 0
+	else
+		error "Can't read a key from file \"%s\".\n" "$key_file"
+		return 1
+	fi
+}
+
+run_gpg() {
+	"$gpg_program" --no-default-recipient --no-encrypt-to \
+		--batch --yes --quiet "$@"
+}
+
+random_password() {
+	local length=$1
+	tr -cd 0-9A-Za-z </dev/urandom | head -c "$length"
+}
+
+confirm_overwrite() {
+	local file=$1
+
+	if [ -f "$file" ]; then
+		local opt
+		for opt in "${options[@]}"; do
+			[ "$opt" = force ] && return 0
+		done
+
+		local answer
+		read -er -p "The target password exists. Overwrite (y/n)? " \
+			answer
+		until [[ "$answer" == y || "$answer" == n ]]; do
+			read -er -p "Please answer y=yes or n=no: " answer
+		done
+		[[ "$answer" == n ]] && return 1
+	fi
+	return 0
+}
+
+command_init() {
+	local new_key=${arguments[0]}
+
+	if [ -z "$new_key" ]; then
+		error 'Key argument is missing.\n'
+		exit 1
+	fi
+
+	mkdir -p -- "$storage" || exit 1
+	mkdir -p -- "$password_dir" || exit 1
+	cd -- "$storage" || exit 1
+
+	cat > "$config_file" <<EOF
+# -*- mode:sh -*- vi:ft=sh
+# This Bash script is sourced by the main program.
+
+# The default password length:
+password_length=$password_length
+# How long password is kept in the clipboard (in seconds):
+password_timeout=$password_timeout
+# The GnuPG program:
+gpg_program=$gpg_program
+# Set a non-default GnuPG directory:
+# export GNUPGHOME=...
+EOF
+
+	local old_key
+	[ -f "$key_file" ] && old_key=$(read_key)
+	printf '%s\n' "$new_key" > "$key_file"
+	msg 'Initialized password storage "%s"\n' "$storage"
+	msg 'for key "%s".\n' "$new_key"
+
+	[[ -z "$old_key" || "$old_key" == "$new_key" ]] && exit 1
+
+	msg "\nThere is an old key id in the storage "
+	msg "and it's different from the new key id.\n"
+	local answer
+	read -p "Do you want to reencrypt passwords with the new key id (y/n)? " \
+		-er answer
+	until [[ "$answer" == y || "$answer" == n ]]; do
+		read -er -p "Please answer y=yes or n=no: " answer
+	done
+	[[ "$answer" == n ]] && exit 1
+
+	chdir_password_dir || exit 1
+	local file name tmp
+	tmp=$(mktemp) || exit 1
+	while read -r -d $'\0' file; do
+		name=${file#./}
+		name=${name%.gpg}
+		msg 'Reencrypting "%s".\n' "$name"
+		run_gpg --decrypt --output "$tmp" -- "$file" && \
+			run_gpg --encrypt --recipient "$new_key" \
+			--output "$file" -- "$tmp"
+	done < <(find . -mindepth 1 -type f -iname '*.gpg' -print0 | sort -nz)
+	rm -f -- "$tmp"
+}
+
+clipboard() {
+	local password
+	read -r password
+	printf %s "$password" | base64 -d | xsel --input --clipboard &
+	printf %s "$password" | base64 -d | xsel --input --primary &
+}
+
+show_or_clip() {
+	local opt
+	for opt in "${options[@]}"; do
+		if [ "$opt" = show ]; then
+			cat
+			return 0
+		fi
+	done
+
+	head -n1 | tr -d '\n' | base64 -w0 | clipboard
+	msg 'Password copied to clipboard. '
+	msg 'It will be cleared in %d seconds.\n' "$password_timeout"
+	{ sleep "$password_timeout"; clipboard <<< ""; } &
+}
+
+command_generate() {
+	chdir_password_dir || exit 1
+	local file=${arguments[0]}
+	local length=${arguments[1]}
+
+	case "$length" in
+	*[!0-9]*)
+		error 'Password length argument must be an integer.\n'
+		exit 1
+		;;
+	"") length=$password_length ;;
+	esac
+
+	if [ -z "$file" ]; then
+		error 'Password name argument is missing.\n'
+		exit 1
+	fi
+
+	confirm_overwrite "$file".gpg || exit 1
+
+	local dir password
+	dir=$(dirname -- "$file")
+	mkdir -p -- "$dir" || exit 1
+	password=$(random_password "$length") || exit 1
+
+	local key
+	key=$(read_key) || exit 1
+	if printf '%s\n' "$password" | run_gpg --encrypt --recipient "$key" \
+		--output "$file".gpg
+	then
+		msg 'Generated a random password for "%s" (length %d).\n' \
+			"$file" "$length"
+		printf '%s\n' "$password" | show_or_clip
+	fi
+}
+
+files_collect() {
+	# Modifies variable "files".
+	local pattern=$1 file i=0
+	[ -n "$pattern" ] || pattern='*'
+	files=
+	while read -r -d $'\0' file; do
+		files[i++]=${file#./}
+	done < <(find . -mindepth 1 -type f -iwholename "*${pattern}*".gpg \
+		-print0 | sort -nz)
+}
+
+files_print() {
+	if [ -z "$*" ]; then
+		error 'No passwords found.\n'
+		return 1
+	fi
+
+	local file i=1
+	for file in "$@"; do
+		printf '%3d) %s\n' $((i++)) "${file%.gpg}"
+	done
+	return 0
+}
+
+files_choose() {
+	local number
+	read -er -p "Number: " number
+	if [ -n "$number" ] && (( number > 0 && number <= $# )); then
+		printf '%s\n' "${files[number - 1]}"
+		return 0
+	else
+		return 1
+	fi
+}
+
+command_list() {
+	chdir_password_dir || exit 1
+	local pattern=${arguments[0]} files
+	files_collect "$pattern"
+	files_print "${files[@]}" || exit 1
+}
+
+command_clip() {
+	chdir_password_dir || exit 1
+	local pattern=${arguments[0]}
+
+	if [ -z "$pattern" ]; then
+		error 'Password search pattern is missing.\n'
+		exit 1
+	fi
+
+	local file files
+	files_collect "$pattern"
+	files_print "${files[@]}" || exit 1
+	file=$(files_choose "${files[@]}")
+
+	[ -f "$file" ] || exit 1
+	local tmp
+	tmp=$(mktemp) || exit 1
+	run_gpg --decrypt --output "$tmp" -- "$file" && show_or_clip < "$tmp"
+	rm -f -- "$tmp"
+}
+
+command_add() {
+	chdir_password_dir || exit 1
+	local file=${arguments[0]}
+
+	if [ -z "$file" ]; then
+		error 'Password name argument is missing.\n'
+		exit 1
+	fi
+
+	confirm_overwrite "$file".gpg || exit 1
+
+	local dir tmp key
+	dir=$(dirname -- "$file")
+	mkdir -p -- "$dir" || exit 1
+	tmp=$(mktemp) || exit 1
+	key=$(read_key) || exit 1
+	run_editor "$tmp"
+	run_gpg --encrypt --recipient "$key" --output "$file".gpg -- "$tmp"
+	rm -f -- "$tmp"
+}
+
+command_edit() {
+	chdir_password_dir || exit 1
+	local pattern=${arguments[0]}
+
+	if [ -z "$pattern" ]; then
+		error 'Password search pattern is missing.\n'
+		exit 1
+	fi
+
+	local file files
+	files_collect "$pattern"
+	files_print "${files[@]}" || exit 1
+	file=$(files_choose "${files[@]}") || exit 1
+
+	[ -f "$file" ] || exit 1
+
+	local tmp key
+	tmp=$(mktemp) || exit 1
+	key=$(read_key) || exit 1
+	run_gpg --decrypt --output "$tmp" -- "$file"
+	run_editor "$tmp"
+	run_gpg --encrypt --recipient "$key" --output "$file" -- "$tmp"
+	rm -f -- "$tmp"
+}
+
+command_delete() {
+	chdir_password_dir || exit 1
+	local name=${arguments[0]}
+
+	if [ -z "$name" ]; then
+		error 'Password name argument is missing.\n'
+		exit 1
+	fi
+
+	if [ ! -f "$name".gpg ]; then
+		error 'Password not found.\n'
+		exit 1
+	fi
+
+	rm -f -- "$name".gpg
+	find . -mindepth 1 -type d -empty -delete
+	msg 'Password "%s" deleted.\n' "$name"
+}
+
+command_rename() {
+	chdir_password_dir || exit 1
+	local old=${arguments[0]}
+	local new=${arguments[1]}
+
+	if [ -z "$old" ]; then
+		error 'Old password name argument is missing.\n'
+		exit 1
+	fi
+
+	if [ -z "$new" ]; then
+		error 'New password name argument is missing.\n'
+		exit 1
+	fi
+
+	if [ ! -f "$old".gpg ]; then
+		error 'Password "%s" not found.\n' "$old"
+		exit 1
+	fi
+
+	confirm_overwrite "$new".gpg || exit 1
+	mkdir -p -- "$(dirname -- "$new")" || exit 1
+	mv -f -- "$old".gpg "$new".gpg
+	find . -mindepth 1 -type d -empty -delete
+	msg 'Password "%s" renamed to "%s".\n' "$old" "$new"
+}
+
+command_help() {
+	local l=$password_length c=$password_timeout
+	cat <<EOF
+Usage: $program [options] [--] [arguments]
+       $program PATTERN
+
+  The default operation lists all password names that match the PATTERN
+  that is given as argument. User is asked to choose one password and
+  the first line of the chosen password is then copied to clipboard (see
+  also "-s"). The clipboard is cleared after $c seconds. Shell wildcards
+  *, ? and [] are supported in PATTERN.
+
+Command options
+
+  -l [PATTERN]
+
+        List all password names that match PATTERN (or all passwords if
+        PATTERN is not given).
+
+  -a NAME
+
+        Add new password NAME and edit it with the default text editor
+        (\$EDITOR).
+
+  -e PATTERN
+
+        Edit an existing password with the default text editor
+        (\$EDITOR). First list all password names that match PATTERN.
+        Then ask user to choose one password to be edited.
+
+  -g NAME [LENGTH]
+
+        Generate and store a random password named NAME. The optional
+        LENGTH argument sets the password length (default $l). The
+        password is also copied to clipboard for $c seconds (see also
+        "-s").
+
+  -d NAME
+
+        Delete password NAME.
+
+  -r OLD NEW
+
+        Rename password from OLD name to NEW name.
+
+  -i KEY
+
+        Initialize the password storage to be used with KEY. The KEY
+        argument can be any valid reference to a gpg key in the default
+        public keyring. You can use -i option again later to change the
+        KEY and reencrypt the password files for your new key.
+
+  -h    Print this help text.
+
+Other options
+
+  -s    Show password. Instead of copying password to clipboard print it
+        to the stardard output.
+
+  -f    Force overwrite existing password. Don't ask for confirmation.
+
+Storage directory:  ~${storage#$HOME}
+Configuration file: ~${config_file#$HOME}
+Key id file:        ~${key_file#$HOME}
+EOF
+}
+
+main() {
+	local option options command arguments i=0
+	while getopts :laegdrihsf option; do
+		case "$option" in
+		l) check_command "$command" && command=list ;;
+		a) check_command "$command" && command=add ;;
+		e) check_command "$command" && command=edit ;;
+		g) check_command "$command" && command=generate ;;
+		d) check_command "$command" && command=delete ;;
+		r) check_command "$command" && command=rename ;;
+		i) check_command "$command" && command=init ;;
+		h) check_command "$command" && command=help ;;
+		s) options[i++]=show ;;
+		f) options[i++]=force ;;
+		\?) error 'Unknown option "-%s".\n' "$OPTARG" ;;
+		esac
+	done
+	arguments=( "${@:$OPTIND}" )
+
+	if [ -n "$command" ]; then
+		command_"$command"
+	else
+		command_clip
+	fi
+}
+
+main "$@"
