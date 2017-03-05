@@ -9,8 +9,12 @@ separate encrypted file under user's home directory.
 [pass]: https://www.passwordstore.org/
 
 
-Requirements
-------------
+Requirements and Installation
+-----------------------------
+
+Install the required programs (see below) and copy the `pw` executable
+program somewhere in your system's `$PATH`, for example in
+`/usr/local/bin` or `~/bin`.
 
   * A GNU/Linux system with [Bash][] shell and GNU [Coreutils][]. Normal
     GNU/Linux distributions install these by default.
@@ -23,14 +27,6 @@ Requirements
 [Coreutils]: https://www.gnu.org/software/coreutils/coreutils.html
 [GnuPG]:     https://gnupg.org/
 [xsel]:      http://www.vergenet.net/~conrad/software/xsel/
-
-
-Install
--------
-
-Install the required programs (see above) and copy the `pw` executable
-program somewhere in your system's `$PATH`, for example in
-`/usr/local/bin` or `~/bin`.
 
 
 Usage
