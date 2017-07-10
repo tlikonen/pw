@@ -19,7 +19,7 @@
 # The license text: <http://www.gnu.org/licenses/gpl-3.0.html>
 
 program=$(basename -- "$0")
-storage=$HOME/.pw
+storage=$HOME/.config/pw
 password_dir=$storage/passwords
 key_file=$storage/key
 config_file=$storage/config
