@@ -218,8 +218,7 @@ command_generate() {
 
 files_collect() {
 	# Modifies variable "files".
-	local pattern=$1 file i=0
-	[[ -n $pattern ]] || pattern='*'
+	local pattern=${1:-*} file i=0
 	files=
 	while read -r -d $'\0' file; do
 		files[i++]=${file#./}
