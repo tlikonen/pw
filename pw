@@ -186,18 +186,15 @@ show_or_clip() {
 command_generate() {
 	chdir_password_dir || exit 1
 	local file=${arguments[0]}
-	local length=${arguments[1]}
-
-	case "$length" in
-	*[!0-9]*)
-		error 'Password length argument must be an integer.\n'
-		exit 1
-		;;
-	"") length=$password_length ;;
-	esac
+	local length=${arguments[1]:-$password_length}
 
 	if [[ -z $file ]]; then
 		error 'Password name argument is missing.\n'
+		exit 1
+	fi
+
+	if (( length < 1 )); then
+		error 'Password length must be a positive integer.\n'
 		exit 1
 	fi
 
