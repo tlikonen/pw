@@ -227,7 +227,7 @@ files_collect() {
 }
 
 files_print() {
-	if [[ -z "$*" ]]; then
+	if [[ -z $* ]]; then
 		error 'No passwords found.\n'
 		return 1
 	fi
@@ -242,7 +242,7 @@ files_print() {
 files_choose() {
 	local number
 	read -er -p "Number: " number
-	if [[ -n $number ]] && (( number > 0 && number <= $# )); then
+	if (( number > 0 && number <= $# )); then
 		printf '%s\n' "${files[number - 1]}"
 		return 0
 	else
