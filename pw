@@ -135,7 +135,7 @@ EOF
 	msg 'Initialized password storage "%s"\n' "$storage"
 	msg 'for key "%s".\n' "$new_key"
 
-	[[ -z $old_key || $old_key == $new_key ]] && exit 1
+	[[ -z $old_key || $old_key == "$new_key" ]] && exit 1
 
 	msg "\nThere is an old key id in the storage "
 	msg "and it's different from the new key id.\n"
