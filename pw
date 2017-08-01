@@ -83,6 +83,16 @@ random_password() {
 	tr -cd 0-9A-Za-z </dev/urandom | head -c "$length"
 }
 
+yes_or_no() {
+	local prompt=$1
+	local answer
+	read -er -p "$prompt" answer
+	until [[ $answer == [yn] ]]; do
+		read -er -p "Please answer y=yes or n=no: " answer
+	done
+	[[ $answer == y ]] && return 0 || return 1
+}
+
 confirm_overwrite() {
 	local file=$1
 
@@ -92,13 +102,8 @@ confirm_overwrite() {
 			[[ $opt == force ]] && return 0
 		done
 
-		local answer
-		read -er -p "The target password exists. Overwrite (y/n)? " \
-			answer
-		until [[ $answer == y || $answer == n ]]; do
-			read -er -p "Please answer y=yes or n=no: " answer
-		done
-		[[ $answer == n ]] && return 1
+		yes_or_no "The target password exists. Overwrite (y/n)? " || \
+			return 1
 	fi
 	return 0
 }
@@ -139,13 +144,9 @@ EOF
 
 	msg "\nThere is an old key id in the storage "
 	msg "and it's different from the new key id.\n"
-	local answer
-	read -p "Do you want to reencrypt passwords with the new key id (y/n)? " \
-		-er answer
-	until [[ $answer == y || $answer == n ]]; do
-		read -er -p "Please answer y=yes or n=no: " answer
-	done
-	[[ $answer == n ]] && exit 1
+
+	yes_or_no "Do you want to reencrypt passwords with the new key id (y/n)? " \
+		|| exit 1
 
 	chdir_password_dir || exit 1
 	local file name tmp
