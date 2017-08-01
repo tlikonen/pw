@@ -150,7 +150,7 @@ EOF
 	chdir_password_dir || exit 1
 	local file name tmp
 	tmp=$(mktemp) || exit 1
-	while read -r -d $'\0' file; do
+	while IFS= read -r -d $'\0' file; do
 		name=${file#./}
 		name=${name%.gpg}
 		msg 'Reencrypting "%s".\n' "$name"
