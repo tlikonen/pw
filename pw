@@ -216,45 +216,37 @@ command_generate() {
 	fi
 }
 
-files_collect() {
-	# Modifies variable "files".
-	local pattern=${1:-*} file i=0
-	files=
-	while read -r -d $'\0' file; do
-		files[i++]=${file#./}
+choose_file() {
+	local pattern=$1
+
+	if [[ -t 0 ]]; then
+		local PS3="Number: "
+	else
+		local PS3=---
+	fi
+
+	local i=0 files file
+	while IFS= read -r -d $'\0' file; do
+		file=${file%.gpg}
+		file=${file#./}
+		files[i++]=$file
 	done < <(find . -mindepth 1 -type f -iwholename "*${pattern}*".gpg \
 		-print0 | sort -nz)
-}
 
-files_print() {
-	if [[ -z $* ]]; then
-		error 'No passwords found.\n'
-		return 1
-	fi
-
-	local file i=1
-	for file in "$@"; do
-		printf '%3d) %s\n' $((i++)) "${file%.gpg}"
+	select file in "${files[@]}"; do
+		if [[ -f $file.gpg ]]; then
+			printf %s "$file.gpg"
+			return 0
+		else
+			return 1
+		fi
 	done
-	return 0
-}
-
-files_choose() {
-	local number
-	read -er -p "Number: " number
-	if (( number > 0 && number <= $# )); then
-		printf '%s\n' "${files[number - 1]}"
-		return 0
-	else
-		return 1
-	fi
 }
 
 command_list() {
 	chdir_password_dir || exit 1
-	local pattern=${arguments[0]} files
-	files_collect "$pattern"
-	files_print "${files[@]}" || exit 1
+	local pattern=${arguments[0]}
+	choose_file "$pattern" </dev/null || exit 1
 }
 
 command_clip() {
@@ -266,12 +258,9 @@ command_clip() {
 		exit 1
 	fi
 
-	local file files
-	files_collect "$pattern"
-	files_print "${files[@]}" || exit 1
-	file=$(files_choose "${files[@]}")
+	local file
+	file=$(choose_file "$pattern") || exit 1
 
-	[[ -f $file ]] || exit 1
 	local tmp
 	tmp=$(mktemp) || exit 1
 	run_gpg --decrypt --output "$tmp" -- "$file" && show_or_clip < "$tmp"
@@ -308,12 +297,8 @@ command_edit() {
 		exit 1
 	fi
 
-	local file files
-	files_collect "$pattern"
-	files_print "${files[@]}" || exit 1
-	file=$(files_choose "${files[@]}") || exit 1
-
-	[[ -f $file ]] || exit 1
+	local file
+	file=$(choose_file "$pattern") || exit 1
 
 	local tmp key
 	tmp=$(mktemp) || exit 1
