@@ -232,7 +232,7 @@ choose_file() {
 		file=${file#./}
 		files[i++]=$file
 	done < <(find . -mindepth 1 -type f -ipath "*${pattern}*".gpg \
-		-print0 | sort -nz)
+		-print0 | sort -fVz)
 
 	select file in "${files[@]}"; do
 		if [[ -f $file.gpg ]]; then
