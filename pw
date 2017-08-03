@@ -231,7 +231,7 @@ choose_file() {
 		file=${file%.gpg}
 		file=${file#./}
 		files[i++]=$file
-	done < <(find . -mindepth 1 -type f -iwholename "*${pattern}*".gpg \
+	done < <(find . -mindepth 1 -type f -ipath "*${pattern}*".gpg \
 		-print0 | sort -nz)
 
 	select file in "${files[@]}"; do
