@@ -242,6 +242,7 @@ choose_file() {
 			return 1
 		fi
 	done
+	return 1
 }
 
 command_list() {
