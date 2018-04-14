@@ -104,7 +104,7 @@ GitHub repository: <https://github.com/tlikonen/pw>
 Copyright and License
 ---------------------
 
-Copyright (C) 2016-2017 Teemu Likonen <<tlikonen@iki.fi>>
+Copyright (C) 2016-2018 Teemu Likonen <<tlikonen@iki.fi>>
 
 PGP: [4E10 55DC 84E9 DFF6 13D7 8557 719D 69D3 2453 9450][PGP]
 
