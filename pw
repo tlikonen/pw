@@ -365,9 +365,9 @@ Usage: $program [options] [--] [arguments]
 
   The default operation lists all password names that match the PATTERN
   that is given as argument. User is asked to choose one password and
-  the first line of the chosen password is then copied to clipboard (see
-  also "-s"). The clipboard is cleared after $c seconds. Shell wildcards
-  *, ? and [] are supported in PATTERN.
+  the first line of the chosen password is then copied to the clipboard
+  (see also "-s"). The clipboard is cleared after $c seconds. Shell
+  wildcards *, ? and [] are supported in PATTERN.
 
 Command options
 
@@ -391,8 +391,8 @@ Command options
 
         Generate and store a random password named NAME. The optional
         LENGTH argument sets the password length (default $l). The
-        password is also copied to clipboard for $c seconds (see also
-        "-s").
+        password is also copied to the clipboard for $c seconds (see
+        also "-s").
 
   -d NAME
 
@@ -413,8 +413,8 @@ Command options
 
 Other options
 
-  -s    Show password. Instead of copying password to clipboard print it
-        to the stardard output.
+  -s    Show password. Instead of copying password to the clipboard
+        print it to the stardard output.
 
   -f    Force overwrite existing password. Don't ask for confirmation.
 

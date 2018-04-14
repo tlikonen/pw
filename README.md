@@ -37,9 +37,9 @@ Usage
 
       The default operation lists all password names that match the PATTERN
       that is given as argument. User is asked to choose one password and
-      the first line of the chosen password is then copied to clipboard (see
-      also "-s"). The clipboard is cleared after 15 seconds. Shell wildcards
-      *, ? and [] are supported in PATTERN.
+      the first line of the chosen password is then copied to the clipboard
+      (see also "-s"). The clipboard is cleared after 15 seconds. Shell
+      wildcards *, ? and [] are supported in PATTERN.
 
     Command options
 
@@ -63,8 +63,8 @@ Usage
 
             Generate and store a random password named NAME. The optional
             LENGTH argument sets the password length (default 16). The
-            password is also copied to clipboard for 15 seconds (see also
-            "-s").
+            password is also copied to the clipboard for 15 seconds (see
+            also "-s").
 
       -d NAME
 
@@ -85,8 +85,8 @@ Usage
 
     Other options
 
-      -s    Show password. Instead of copying password to clipboard print it
-            to the stardard output.
+      -s    Show password. Instead of copying password to the clipboard
+            print it to the stardard output.
 
       -f    Force overwrite existing password. Don't ask for confirmation.
 
