@@ -90,9 +90,9 @@ Usage
 
       -f    Force overwrite existing password. Don't ask for confirmation.
 
-    Storage directory:  ~/.pw
-    Configuration file: ~/.pw/config
-    Key id file:        ~/.pw/key
+    Storage directory:  ~/.config/pw
+    Configuration file: ~/.config/pw/config
+    Key id file:        ~/.config/pw/key
 
 
 The Source Code Repository
