@@ -372,38 +372,31 @@ Usage: $program [options] [--] [arguments]
 Command options
 
   -l [PATTERN]
-
         List all password names that match PATTERN (or all passwords if
         PATTERN is not given).
 
   -a NAME
-
         Add new password NAME and edit it with the default text editor
         (\$EDITOR).
 
   -e PATTERN
-
         Edit an existing password with the default text editor
         (\$EDITOR). First list all password names that match PATTERN.
         Then ask user to choose one password to be edited.
 
   -g NAME [LENGTH]
-
         Generate and store a random password named NAME. The optional
         LENGTH argument sets the password length (default $l). The
         password is also copied to the clipboard for $c seconds (see
         also "-s").
 
   -d NAME
-
         Delete password NAME.
 
   -r OLD NEW
-
         Rename password from OLD name to NEW name.
 
   -i KEY
-
         Initialize the password storage to be used with KEY. The KEY
         argument can be any valid reference to a gpg key in the default
         public keyring. You can use -i option again later to change the
