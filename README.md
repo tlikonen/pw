@@ -9,8 +9,7 @@ separate encrypted file under user's home directory.
 [pass]: https://www.passwordstore.org/
 
 
-Requirements and Installation
------------------------------
+## Requirements and Installation
 
 Install the required programs (see below) and copy the `pw` executable
 program somewhere in your system's `$PATH`, for example in
@@ -29,8 +28,7 @@ program somewhere in your system's `$PATH`, for example in
 [xsel]:      http://www.vergenet.net/~conrad/software/xsel/
 
 
-Usage
------
+## Usage
 
     Usage: pw [options] [--] [arguments]
            pw PATTERN
@@ -87,19 +85,16 @@ Usage
     Configuration file: ~/.config/pw/config
     Key id file:        ~/.config/pw/key
 
-
-The Source Code Repository
---------------------------
+## The Source Code Repository
 
 GitHub repository: <https://github.com/tlikonen/pw>
 
 
-Copyright and License
----------------------
+## Copyright and License
 
 Copyright (C) 2016-2018 Teemu Likonen <<tlikonen@iki.fi>>
 
-PGP: [4E10 55DC 84E9 DFF6 13D7 8557 719D 69D3 2453 9450][PGP]
+OpenPGP key: [4E10 55DC 84E9 DFF6 13D7 8557 719D 69D3 2453 9450][PGP]
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
