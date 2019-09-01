@@ -90,7 +90,7 @@ yes_or_no() {
 	until [[ $answer == [yn] ]]; do
 		read -er -p "Please answer y=yes or n=no: " answer
 	done
-	[[ $answer == y ]] && return 0 || return 1
+	if [[ $answer == y ]]; then return 0; else return 1; fi
 }
 
 confirm_overwrite() {
