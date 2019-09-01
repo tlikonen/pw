@@ -75,7 +75,7 @@ read_key() {
 
 run_gpg() {
 	"$gpg_program" --no-default-recipient --no-encrypt-to \
-		--batch --yes --quiet "$@"
+		--batch --no-tty --yes --quiet "$@"
 }
 
 random_password() {
