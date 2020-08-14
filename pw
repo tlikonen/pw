@@ -47,6 +47,17 @@ check_command() {
 	fi
 }
 
+required_commands() {
+	local cmd
+	for cmd in "$@"; do
+		if ! command -v "$cmd" >/dev/null; then
+			error 'Required command "%s" is missing.\n' "$cmd"
+			exit 1
+		fi
+	done
+	return 0
+}
+
 chdir_password_dir() {
 	if [[ ! -d $storage || ! -d $password_dir ]]; then
 		error "Password storage directory is missing.\n"
@@ -74,6 +85,7 @@ read_key() {
 }
 
 run_gpg() {
+	required_commands "$gpg_program"
 	"$gpg_program" --no-default-recipient --no-encrypt-to \
 		--batch --no-tty --yes --quiet "$@"
 }
@@ -177,6 +189,8 @@ show_or_clip() {
 			return 0
 		fi
 	done
+
+	required_commands xsel base64
 
 	head -n1 | tr -d '\n' | base64 -w0 | clipboard
 	msg 'Password copied to clipboard. '
