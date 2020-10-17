@@ -69,8 +69,8 @@ program somewhere in your system's `$PATH`, for example in
       -i KEY
             Initialize the password storage to be used with KEY. The KEY
             argument can be any valid reference to a gpg key in the default
-            public keyring. You can use -i option again later to change the
-            KEY and reencrypt the password files for your new key.
+            public keyring. You can use this option again later to change
+            the KEY and reencrypt all password files for the new key.
 
       -h    Print this help text.
 
