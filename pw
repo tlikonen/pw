@@ -40,7 +40,7 @@ command_defined() {
 	local command=$1
 	if [[ -n $command ]]; then
 		error 'Only one command option is allowed; '
-		error 'see -h for help.\n'
+		error 'use -h for help.\n'
 		return 0
 	else
 		return 1
@@ -462,7 +462,10 @@ main() {
 			then return 1; else command=help; fi ;;
 		s) options[i++]=show ;;
 		f) options[i++]=force ;;
-		\?) error 'Unknown option "-%s".\n' "$OPTARG" ;;
+		\?)
+			error 'Unknown option "-%s". Use -h for help.\n' "$OPTARG"
+			return 1
+			;;
 		esac
 	done
 	arguments=( "${@:$OPTIND}" )
