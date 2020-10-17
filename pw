@@ -36,14 +36,14 @@ error() { printf "$@" >&2; }
 
 run_editor() { "$EDITOR" "$1"; }
 
-check_command() {
+command_defined() {
 	local command=$1
 	if [[ -n $command ]]; then
 		error 'Only one command option is allowed; '
 		error 'see -h for help.\n'
-		exit 1
-	else
 		return 0
+	else
+		return 1
 	fi
 }
 
@@ -52,7 +52,7 @@ required_commands() {
 	for cmd in "$@"; do
 		if ! command -v "$cmd" >/dev/null; then
 			error 'Required command "%s" is missing.\n' "$cmd"
-			exit 1
+			return 1
 		fi
 	done
 	return 0
@@ -85,7 +85,7 @@ read_key() {
 }
 
 run_gpg() {
-	required_commands "$gpg_program"
+	required_commands "$gpg_program" || return 1
 	"$gpg_program" --no-default-recipient --no-encrypt-to \
 		--batch --no-tty --yes --quiet "$@"
 }
@@ -125,12 +125,12 @@ command_init() {
 
 	if [[ -z $new_key ]]; then
 		error 'Key argument is missing.\n'
-		exit 1
+		return 1
 	fi
 
-	mkdir -p -- "$storage" || exit 1
-	mkdir -p -- "$password_dir" || exit 1
-	cd -- "$storage" || exit 1
+	mkdir -p -- "$storage" || return 1
+	mkdir -p -- "$password_dir" || return 1
+	cd -- "$storage" || return 1
 
 	cat > "$config_file" <<EOF
 # -*- mode:sh -*- vi:ft=sh
@@ -152,17 +152,17 @@ EOF
 	msg 'Initialized password storage "%s"\n' "$storage"
 	msg 'for key "%s".\n' "$new_key"
 
-	[[ -z $old_key || $old_key == "$new_key" ]] && exit 1
+	[[ -z $old_key || $old_key == "$new_key" ]] && return 1
 
 	msg "\nThere is an old key id in the storage "
 	msg "and it's different from the new key id.\n"
 
 	yes_or_no "Do you want to reencrypt passwords with the new key id (y/n)? " \
-		|| exit 1
+		|| return 1
 
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local file name tmp
-	tmp=$(mktemp) || exit 1
+	tmp=$(mktemp) || return 1
 	while IFS= read -r -d $'\0' file; do
 		name=${file#./}
 		name=${name%.gpg}
@@ -190,7 +190,7 @@ show_or_clip() {
 		fi
 	done
 
-	required_commands xsel base64
+	required_commands xsel base64 || return 1
 
 	head -n1 | tr -d '\n' | base64 -w0 | clipboard
 	msg 'Password copied to clipboard. '
@@ -199,29 +199,29 @@ show_or_clip() {
 }
 
 command_generate() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local file=${arguments[0]}
 	local length=${arguments[1]:-$password_length}
 
 	if [[ -z $file ]]; then
 		error 'Password name argument is missing.\n'
-		exit 1
+		return 1
 	fi
 
 	if (( length < 1 )); then
 		error 'Password length must be a positive integer.\n'
-		exit 1
+		return 1
 	fi
 
-	confirm_overwrite "$file".gpg || exit 1
+	confirm_overwrite "$file".gpg || return 1
 
 	local dir password
 	dir=$(dirname -- "$file")
-	mkdir -p -- "$dir" || exit 1
-	password=$(random_password "$length") || exit 1
+	mkdir -p -- "$dir" || return 1
+	password=$(random_password "$length") || return 1
 
 	local key
-	key=$(read_key) || exit 1
+	key=$(read_key) || return 1
 	if printf '%s\n' "$password" | run_gpg --encrypt --recipient "$key" \
 		--output "$file".gpg
 	then
@@ -260,66 +260,66 @@ choose_file() {
 }
 
 command_list() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local pattern=${arguments[0]}
 	choose_file "$pattern" </dev/null
 	return 0
 }
 
 command_clip() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local pattern=${arguments[0]}
 
 	if [[ -z $pattern ]]; then
 		error 'Password search pattern is missing.\n'
-		exit 1
+		return 1
 	fi
 
 	local file
-	file=$(choose_file "$pattern") || exit 1
+	file=$(choose_file "$pattern") || return 1
 
 	local tmp
-	tmp=$(mktemp) || exit 1
+	tmp=$(mktemp) || return 1
 	run_gpg --decrypt --output "$tmp" -- "$file" && show_or_clip < "$tmp"
 	rm -f -- "$tmp"
 }
 
 command_add() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local file=${arguments[0]}
 
 	if [[ -z $file ]]; then
 		error 'Password name argument is missing.\n'
-		exit 1
+		return 1
 	fi
 
-	confirm_overwrite "$file".gpg || exit 1
+	confirm_overwrite "$file".gpg || return 1
 
 	local dir tmp key
 	dir=$(dirname -- "$file")
-	mkdir -p -- "$dir" || exit 1
-	tmp=$(mktemp) || exit 1
-	key=$(read_key) || exit 1
+	mkdir -p -- "$dir" || return 1
+	tmp=$(mktemp) || return 1
+	key=$(read_key) || return 1
 	run_editor "$tmp"
 	run_gpg --encrypt --recipient "$key" --output "$file".gpg -- "$tmp"
 	rm -f -- "$tmp"
 }
 
 command_edit() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local pattern=${arguments[0]}
 
 	if [[ -z $pattern ]]; then
 		error 'Password search pattern is missing.\n'
-		exit 1
+		return 1
 	fi
 
 	local file
-	file=$(choose_file "$pattern") || exit 1
+	file=$(choose_file "$pattern") || return 1
 
 	local tmp key
-	tmp=$(mktemp) || exit 1
-	key=$(read_key) || exit 1
+	tmp=$(mktemp) || return 1
+	key=$(read_key) || return 1
 	run_gpg --decrypt --output "$tmp" -- "$file"
 	run_editor "$tmp"
 	run_gpg --encrypt --recipient "$key" --output "$file" -- "$tmp"
@@ -327,17 +327,17 @@ command_edit() {
 }
 
 command_delete() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local name=${arguments[0]}
 
 	if [[ -z $name ]]; then
 		error 'Password name argument is missing.\n'
-		exit 1
+		return 1
 	fi
 
 	if [[ ! -f $name.gpg ]]; then
 		error 'Password not found.\n'
-		exit 1
+		return 1
 	fi
 
 	rm -f -- "$name".gpg
@@ -346,27 +346,27 @@ command_delete() {
 }
 
 command_rename() {
-	chdir_password_dir || exit 1
+	chdir_password_dir || return 1
 	local old=${arguments[0]}
 	local new=${arguments[1]}
 
 	if [[ -z $old ]]; then
 		error 'Old password name argument is missing.\n'
-		exit 1
+		return 1
 	fi
 
 	if [[ -z $new ]]; then
 		error 'New password name argument is missing.\n'
-		exit 1
+		return 1
 	fi
 
 	if [[ ! -f $old.gpg ]]; then
 		error 'Password "%s" not found.\n' "$old"
-		exit 1
+		return 1
 	fi
 
-	confirm_overwrite "$new".gpg || exit 1
-	mkdir -p -- "$(dirname -- "$new")" || exit 1
+	confirm_overwrite "$new".gpg || return 1
+	mkdir -p -- "$(dirname -- "$new")" || return 1
 	mv -f -- "$old".gpg "$new".gpg
 	find . -mindepth 1 -type d -empty -delete
 	msg 'Password "%s" renamed to "%s".\n' "$old" "$new"
@@ -436,14 +436,30 @@ main() {
 	local option options command arguments i=0
 	while getopts :laegdrihsf option; do
 		case "$option" in
-		l) check_command "$command" && command=list ;;
-		a) check_command "$command" && command=add ;;
-		e) check_command "$command" && command=edit ;;
-		g) check_command "$command" && command=generate ;;
-		d) check_command "$command" && command=delete ;;
-		r) check_command "$command" && command=rename ;;
-		i) check_command "$command" && command=init ;;
-		h) check_command "$command" && command=help ;;
+		l)
+			if command_defined "$command"
+			then return 1; else command=list; fi ;;
+		a)
+			if command_defined "$command"
+			then return 1; else command=add; fi ;;
+		e)
+			if command_defined "$command"
+			then return 1; else command=edit; fi ;;
+		g)
+			if command_defined "$command"
+			then return 1; else command=generate; fi ;;
+		d)
+			if command_defined "$command"
+			then return 1; else command=delete; fi ;;
+		r)
+			if command_defined "$command"
+			then return 1; else command=rename; fi ;;
+		i)
+			if command_defined "$command"
+			then return 1; else command=init; fi ;;
+		h)
+			if command_defined "$command"
+			then return 1; else command=help; fi ;;
 		s) options[i++]=show ;;
 		f) options[i++]=force ;;
 		\?) error 'Unknown option "-%s".\n' "$OPTARG" ;;
