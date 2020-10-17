@@ -437,31 +437,43 @@ main() {
 	while getopts :laegdrihsf option; do
 		case "$option" in
 		l)
-			if command_defined "$command"
-			then return 1; else command=list; fi ;;
+			if command_defined "$command"; then return 1
+			else command=list; fi
+			;;
 		a)
-			if command_defined "$command"
-			then return 1; else command=add; fi ;;
+			if command_defined "$command"; then return 1
+			else command=add; fi
+			;;
 		e)
-			if command_defined "$command"
-			then return 1; else command=edit; fi ;;
+			if command_defined "$command"; then return 1
+			else command=edit; fi
+			;;
 		g)
-			if command_defined "$command"
-			then return 1; else command=generate; fi ;;
+			if command_defined "$command"; then return 1
+			else command=generate; fi
+			;;
 		d)
-			if command_defined "$command"
-			then return 1; else command=delete; fi ;;
+			if command_defined "$command"; then return 1
+			else command=delete; fi
+			;;
 		r)
-			if command_defined "$command"
-			then return 1; else command=rename; fi ;;
+			if command_defined "$command"; then return 1
+			else command=rename; fi
+			;;
 		i)
-			if command_defined "$command"
-			then return 1; else command=init; fi ;;
+			if command_defined "$command"; then return 1
+			else command=init; fi
+			;;
 		h)
-			if command_defined "$command"
-			then return 1; else command=help; fi ;;
-		s) options[i++]=show ;;
-		f) options[i++]=force ;;
+			if command_defined "$command"; then return 1
+			else command=help; fi
+			;;
+		s)
+			options[i++]=show
+			;;
+		f)
+			options[i++]=force
+			;;
 		\?)
 			error 'Unknown option "-%s". Use -h for help.\n' "$OPTARG"
 			return 1
