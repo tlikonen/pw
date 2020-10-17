@@ -262,7 +262,8 @@ choose_file() {
 command_list() {
 	chdir_password_dir || exit 1
 	local pattern=${arguments[0]}
-	choose_file "$pattern" </dev/null || exit 1
+	choose_file "$pattern" </dev/null
+	return 0
 }
 
 command_clip() {
