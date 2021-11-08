@@ -426,9 +426,9 @@ Other options
 
   -f    Force overwrite existing password. Don't ask for confirmation.
 
-Storage directory:  ~${storage#$HOME}
-Configuration file: ~${config_file#$HOME}
-Key id file:        ~${key_file#$HOME}
+Storage directory:  $storage
+Configuration file: $config_file
+Key id file:        $key_file
 EOF
 }
 
