@@ -92,9 +92,9 @@ GitHub repository: <https://github.com/tlikonen/pw>
 
 ## Copyright and License
 
-Copyright (C) 2016-2020 Teemu Likonen <<tlikonen@iki.fi>>
+Copyright (C) 2016-2021 Teemu Likonen <<tlikonen@iki.fi>>
 
-OpenPGP key: [4E10 55DC 84E9 DFF6 13D7 8557 719D 69D3 2453 9450][PGP]
+OpenPGP key: [6965F03973F0D4CA22B9410F0F2CAE0E07608462][PGP]
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
