@@ -92,7 +92,7 @@ run_gpg() {
 
 random_password() {
 	local length=$1
-	tr -cd 0-9A-Za-z </dev/urandom | head -c "$length"
+	tr -cd '0-9A-Za-z.,!#%&/()=+-[]*;:_' </dev/urandom | head -c "$length"
 }
 
 yes_or_no() {
