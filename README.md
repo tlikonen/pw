@@ -19,13 +19,14 @@ program somewhere in your system's `$PATH`, for example in
     GNU/Linux distributions install these by default.
   * [GnuPG][] (gpg): Should be installed by default on GNU/Linux
     systems.
-  * [xsel][]: You probably need to use your package manager to install
-    this.
+  * [xsel][] and [pwgen][]: You probably need to use your package
+    manager to install these.
 
 [Bash]:      https://www.gnu.org/software/bash/
 [Coreutils]: https://www.gnu.org/software/coreutils/coreutils.html
 [GnuPG]:     https://gnupg.org/
 [xsel]:      http://www.vergenet.net/~conrad/software/xsel/
+[pwgen]:     https://github.com/tytso/pwgen
 
 
 ## Usage

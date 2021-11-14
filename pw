@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # pw -- a password manager
-#
-# Requires: GNU/Linux, gpg, xsel
 
 # Copyright (C) 2016-2021  Teemu Likonen <tlikonen@iki.fi>
 #
@@ -91,8 +89,9 @@ run_gpg() {
 }
 
 random_password() {
+	required_commands pwgen || return 1
 	local length=$1
-	tr -cd '0-9A-Za-z.,!#%&/()=+-[]*;:_' </dev/urandom | head -c "$length"
+	pwgen -sy "$length" 1
 }
 
 yes_or_no() {
