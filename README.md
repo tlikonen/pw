@@ -81,9 +81,6 @@ program somewhere in your system's `$PATH`, for example in
 
       -f    Force overwrite existing password. Don't ask for confirmation.
 
-    Storage directory:  ~/.config/pw
-    Configuration file: ~/.config/pw/config
-    Key id file:        ~/.config/pw/key
 
 ## The Source Code Repository
 

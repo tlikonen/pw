@@ -136,11 +136,11 @@ command_init() {
 # -*- mode:sh -*- vi:ft=sh
 # This Bash script is sourced by the main program.
 
-# The default password length:
+# Default password length:
 password_length=$password_length
 # How long password is kept in the clipboard (in seconds):
 password_timeout=$password_timeout
-# The GnuPG program:
+# GnuPG program:
 gpg_program=$gpg_program
 # Set a non-default GnuPG directory:
 # export GNUPGHOME=...
@@ -426,9 +426,6 @@ Other options
 
   -f    Force overwrite existing password. Don't ask for confirmation.
 
-Storage directory:  $storage
-Configuration file: $config_file
-Key id file:        $key_file
 EOF
 }
 
