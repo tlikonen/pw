@@ -100,7 +100,7 @@ yes_or_no() {
 	local answer
 	read -er -p "$prompt" answer
 	until [[ $answer == [yn] ]]; do
-		read -er -p "Please answer y=yes or n=no: " answer
+		read -er -p "Please answer y (yes) or n (no): " answer
 	done
 	if [[ $answer == y ]]; then return 0; else return 1; fi
 }
